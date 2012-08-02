@@ -29,7 +29,7 @@ module Quartz
   end
   
   class CronJobSingle < CronJob
-    add_class_annotation({ DisallowConcurrentExecution => {} }) 
+    add_class_annotations({ DisallowConcurrentExecution => {} }) 
   end
   
   CronJob.become_java!
