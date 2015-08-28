@@ -7,6 +7,8 @@ java_import 'org.quartz.CronScheduleBuilder'
 
 java_import 'org.quartz.SchedulerException'
 
+java_import 'java.lang.System'
+
 module Quartz
   module Scheduler
     def self.included(base)
@@ -26,13 +28,18 @@ module Quartz
         instance.run_once(name, block)
       end
 
-
     end
 
 
     module InstanceMethods
 
       def scheduler_factory
+
+        System.setProperty("org.quartz.threadPool.class", "org.quartz.simpl.SimpleThreadPool")
+        System.setProperty("org.quartz.threadPool.threadCount", "50")
+        System.setProperty("org.quartz.threadPool.threadPriority", "1")
+        System.setProperty("org.quartz.threadPool.threadsInheritContextClassLoaderOfInitializingThread", "yes")
+
         @scheduler_factory ||= StdSchedulerFactory.new
       end
 
