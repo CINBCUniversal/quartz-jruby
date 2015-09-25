@@ -1,7 +1,8 @@
-require 'quartz/jars/slf4j-log4j12-1.6.1'
-require 'quartz/jars/slf4j-api-1.6.1'
-require 'quartz/jars/log4j-1.2.14'
-require 'quartz/jars/quartz-2.0.1'
+require 'quartz/jars/slf4j-log4j12-1.6.6'                                                                                
+require 'quartz/jars/slf4j-api-1.6.6'                                                                                          
+require 'quartz/jars/log4j-1.2.16'                                                                                                    
+require 'quartz/jars/quartz-2.2.1'
+require 'quartz/jars/quartz-jobs-2.2.1'
 
 require 'log4jruby'
 require 'concurrent'
@@ -112,8 +113,10 @@ module Quartz
         begin
           job_code_blocks.jobs[name.to_s] = block
           job = JobBuilder.new_job(Quartz::CronJobSingle.java_class).with_identity("#{name}", self.class.to_s).build
-          scheduler.addJob job, true
-          scheduler.trigger_job(job.key)
+         
+          trigger = TriggerBuilder.new_trigger.with_identity("#{name}_trigger", self.class.to_s).start_now.build
+          
+          scheduler.schedule_job(job, trigger)
         rescue SchedulerException => e
           puts "exception: #{e} "
         end
