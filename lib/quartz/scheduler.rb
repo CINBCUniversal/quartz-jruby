@@ -68,33 +68,25 @@ module Quartz
 
         if options[:cron]
           trigger_schedule = CronScheduleBuilder.cron_schedule(options[:cron])
-        else
+        end
+
+        if options[:every]
           trigger_schedule = SimpleScheduleBuilder.simple_schedule.
               with_interval_in_seconds(options[:every].to_i).repeat_forever
         end
 
-        trigger = TriggerBuilder.new_trigger.with_identity("#{name}_trigger", self.class.to_s).
-            with_schedule(trigger_schedule).build
-
-        scheduler.schedule_job(job, trigger)
+        trigger = TriggerBuilder.new_trigger.with_identity("#{name}_trigger", self.class.to_s)
+        
+        if options[:now]
+          trigger.start_now
+        else
+          trigger.with_schedule(trigger_schedule)
+        end
+          
+        scheduler.schedule_job(job, trigger.build)
 
       rescue Java::OrgQuartz::ObjectAlreadyExistsException => e
         raise e
-      end
-
-      def run_once(name, block)
-
-        begin
-          job_code_blocks.jobs[name.to_s] = block
-          job = JobBuilder.new_job(Quartz::CronJobSingle.java_class).with_identity("#{name}", self.class.to_s).build
-         
-          trigger = TriggerBuilder.new_trigger.with_identity("#{name}_trigger", self.class.to_s).start_now.build
-
-          scheduler.schedule_job(job, trigger)
-        rescue SchedulerException => e
-          puts "exception: #{e} "
-        end
-          puts "job #{name} is scheduled at once"
       end
 
       def stop

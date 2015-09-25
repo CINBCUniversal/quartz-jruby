@@ -39,7 +39,9 @@ class TestScheduler
     it '#run_once' do
       veggie_count = Concurrent::AtomicFixnum.new
       #run asap
-      subject.run_once("eat your veggies", Proc.new { veggie_count.increment })
+      subject.schedule("eat your veggies", :now => true) do 
+        veggie_count.increment
+      end
 
       sleep 4
 
