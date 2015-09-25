@@ -1,0 +1,7 @@
+source 'https://rubygems.org'
+ruby '2.0.0', :engine => 'jruby', :engine_version => '1.7.22'
+gem 'bundler', '>= 1.8.4'
+gem 'rspec'
+gem 'pry-nav'
+gem 'log4jruby'
+gem 'concurrent-ruby', '1.0.0.pre2'

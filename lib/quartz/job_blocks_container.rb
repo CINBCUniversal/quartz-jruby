@@ -1,10 +1,12 @@
+require 'concurrent'
+
 module Quartz
   class JobBlocksContainer
     include Singleton
 
     attr_accessor :jobs
     def initialize
-      @jobs ||= {}
-    end  
+      @jobs ||= Concurrent::Hash.new
+    end
   end
 end
