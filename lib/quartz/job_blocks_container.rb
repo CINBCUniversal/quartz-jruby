@@ -1,5 +1,3 @@
-require 'concurrent'
-
 module Quartz
   class JobBlocksContainer
     include Singleton

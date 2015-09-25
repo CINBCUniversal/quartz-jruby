@@ -1,15 +1,8 @@
 require File.dirname(__FILE__) + '/spec_helper.rb'
-require 'quartz'
-require 'scheduler_proxy'
-require 'java'
-require 'jruby/synchronized'
-require 'concurrent'
 
 class TestScheduler
 
-
   describe 'get the scheduler' do
-
 
     subject { SchedulerProxy.instance }
 

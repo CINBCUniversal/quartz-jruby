@@ -1,38 +1,10 @@
-require 'quartz/jars/slf4j-log4j12-1.6.6'                                                                                
-require 'quartz/jars/slf4j-api-1.6.6'                                                                                          
-require 'quartz/jars/log4j-1.2.16'                                                                                                    
-require 'quartz/jars/quartz-2.2.1'
-require 'quartz/jars/quartz-jobs-2.2.1'
-
 require 'log4jruby'
-require 'concurrent'
-
-java_import 'org.apache.log4j.Level'
-java_import 'org.apache.log4j.ConsoleAppender'
-java_import 'org.apache.log4j.PatternLayout'
-
-java_import 'org.quartz.JobKey'
-java_import 'org.quartz.JobBuilder'
-java_import 'org.quartz.TriggerBuilder'
-java_import 'org.quartz.impl.StdSchedulerFactory'
-java_import 'org.quartz.SimpleScheduleBuilder'
-java_import 'org.quartz.CronScheduleBuilder'
-java_import 'org.quartz.SchedulerException'
-
-java_import 'java.lang.System'
-
-class Log4jruby::Logger
-  def formatter=(formatter)
-    @formatter = formatter
-  end
-
-  def formatter
-    @formatter
-  end
-end
+require 'quartz/jars/log4j-1.2.16'                                                                                                    
 
 module Quartz
   module Scheduler
+    java_import "java.lang.System"
+    include_package "org.apache.log4j"
     def self.included(base)
       base.class_eval do
         include InstanceMethods
@@ -63,6 +35,8 @@ module Quartz
 
 
     module InstanceMethods
+      include_package "org.quartz"
+      java_import 'org.quartz.impl.StdSchedulerFactory'
 
       def scheduler_factory
         @scheduler_factory ||= StdSchedulerFactory.new
@@ -115,7 +89,7 @@ module Quartz
           job = JobBuilder.new_job(Quartz::CronJobSingle.java_class).with_identity("#{name}", self.class.to_s).build
          
           trigger = TriggerBuilder.new_trigger.with_identity("#{name}_trigger", self.class.to_s).start_now.build
-          
+
           scheduler.schedule_job(job, trigger)
         rescue SchedulerException => e
           puts "exception: #{e} "

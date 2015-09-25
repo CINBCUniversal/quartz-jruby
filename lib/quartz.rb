@@ -4,6 +4,7 @@ $:.unshift(File.dirname(__FILE__)) unless
 
 require 'rubygems'
 require 'singleton'
+require 'concurrent'
 
 # require jars                                                                                                                 
 require 'quartz/jars/slf4j-log4j12-1.6.6'                                                                                
