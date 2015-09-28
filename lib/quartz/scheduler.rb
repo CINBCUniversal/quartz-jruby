@@ -61,10 +61,9 @@ module Quartz
       end
 
       def schedule(name, options, &block)
-        job_code_blocks.jobs[name.to_s] = block
+
 
         job_class = (options[:disallow_concurrent] ? Quartz::CronJobSingle : Quartz::CronJob)
-        job = JobBuilder.new_job(job_class.java_class).with_identity("#{name}", self.class.to_s).build
 
         if options[:cron]
           trigger_schedule = CronScheduleBuilder.cron_schedule(options[:cron])
@@ -75,15 +74,20 @@ module Quartz
               with_interval_in_seconds(options[:every].to_i).repeat_forever
         end
 
-        trigger = TriggerBuilder.new_trigger.with_identity("#{name}_trigger", self.class.to_s)
-        
+
         if options[:now]
+          job = JobBuilder.new_job(job_class.java_class).build
+          trigger = TriggerBuilder.new_trigger
           trigger.start_now
         else
+          job = JobBuilder.new_job(job_class.java_class).with_identity("#{name}", self.class.to_s).build
+          trigger = TriggerBuilder.new_trigger.with_identity("#{name}_trigger", self.class.to_s)
           trigger.with_schedule(trigger_schedule)
         end
-          
+
+        job_code_blocks.jobs[job.get_key.get_name] = block
         scheduler.schedule_job(job, trigger.build)
+
 
       rescue Java::OrgQuartz::ObjectAlreadyExistsException => e
         raise e

@@ -48,6 +48,23 @@ class TestScheduler
       expect(veggie_count.value).to eq 1
     end
 
+    it '#run_twice' do
+      veggie_count = Concurrent::AtomicFixnum.new
+
+      subject.schedule("eat your veggies", :now => true) do
+        veggie_count.increment
+      end
+
+      subject.schedule("eat your veggies", :now => true) do
+        veggie_count.increment
+      end
+
+      sleep 4
+
+      expect(veggie_count.value).to eq 2
+    end
+
+
     it '#schedule_every second and sleep main thread for 10' do
       brush_teeth_count = Concurrent::AtomicFixnum.new
       #run now and then every 1 secs after
