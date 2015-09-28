@@ -4,7 +4,7 @@ module Quartz
 
     attr_accessor :jobs
     def initialize
-      @jobs ||= {}
-    end  
+      @jobs ||= Concurrent::Hash.new
+    end
   end
 end

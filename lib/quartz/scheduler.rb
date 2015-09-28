@@ -1,46 +1,49 @@
-java_import 'org.quartz.JobKey'
-java_import 'org.quartz.JobBuilder'
-java_import 'org.quartz.TriggerBuilder'
-java_import 'org.quartz.impl.StdSchedulerFactory'
-java_import 'org.quartz.SimpleScheduleBuilder'
-java_import 'org.quartz.CronScheduleBuilder'
-
-java_import 'org.quartz.SchedulerException'
-
-java_import 'java.lang.System'
+require 'log4jruby'
+require 'quartz/jars/log4j-1.2.16'                                                                                                    
 
 module Quartz
   module Scheduler
+    java_import "java.lang.System"
+    include_package "org.apache.log4j"
     def self.included(base)
-      base.class_eval do        
+      base.class_eval do
         include InstanceMethods
         extend ClassMethods
         include Singleton
-      end
-    end
-
-    module ClassMethods
-      def schedule(name, options, &block)
-        instance.schedule(name, options, block)
-      end
-
-      def run_once(name, &block)
-        instance.run_once(name, block)
-      end
-
-    end
-
-
-    module InstanceMethods
-
-      def scheduler_factory
 
         System.setProperty("org.quartz.threadPool.class", "org.quartz.simpl.SimpleThreadPool")
         System.setProperty("org.quartz.threadPool.threadCount", "50")
         System.setProperty("org.quartz.threadPool.threadPriority", "1")
         System.setProperty("org.quartz.threadPool.threadsInheritContextClassLoaderOfInitializingThread", "yes")
+        System.setProperty("org.quartz.scheduler.instanceName", "RMXScheduler")
 
+        console = ConsoleAppender.new
+        console.setLayout(PatternLayout.new("%d [%p] %m%n"))
+        console.setThreshold(Level.toLevel("INFO"))
+        console.activateOptions
+        org.apache.log4j.Logger.getRootLogger.addAppender(console)
+
+      end
+    end
+
+    module ClassMethods
+
+      def stop
+        instance.stop
+      end
+    end
+
+
+    module InstanceMethods
+      include_package "org.quartz"
+      java_import 'org.quartz.impl.StdSchedulerFactory'
+
+      def scheduler_factory
         @scheduler_factory ||= StdSchedulerFactory.new
+      end
+
+      def scheduler_name
+        scheduler.getSchedulerName
       end
 
       def scheduler
@@ -48,70 +51,68 @@ module Quartz
       end
 
       def run
-        puts scheduler.getSchedulerName
-        if (scheduler.isStarted == false)
-          puts "starting...."
+        if !scheduler.isStarted
           scheduler.start
         end
       end
 
       def status
-        puts scheduler.getSchedulerName
         scheduler.getCurrentlyExecutingJobs
       end
 
+      def schedule(name, options, &block)
+
+
+        job_class = (options[:disallow_concurrent] ? Quartz::CronJobSingle : Quartz::CronJob)
+
+        if options[:cron]
+          trigger_schedule = CronScheduleBuilder.cron_schedule(options[:cron])
+        end
+
+        if options[:every]
+          trigger_schedule = SimpleScheduleBuilder.simple_schedule.
+              with_interval_in_seconds(options[:every].to_i).repeat_forever
+        end
+
+
+        if options[:now]
+          job = JobBuilder.new_job(job_class.java_class).build
+          trigger = TriggerBuilder.new_trigger
+          trigger.start_now
+        else
+          job = JobBuilder.new_job(job_class.java_class).with_identity("#{name}", self.class.to_s).build
+          trigger = TriggerBuilder.new_trigger.with_identity("#{name}_trigger", self.class.to_s)
+          trigger.with_schedule(trigger_schedule)
+        end
+
+        job_code_blocks.jobs[job.get_key.get_name] = block
+        scheduler.schedule_job(job, trigger.build)
+
+
+      rescue Java::OrgQuartz::ObjectAlreadyExistsException => e
+        raise e
+      end
+
+      def stop
+        interrupt
+        scheduler.shutdown(false)
+        puts "scheduler was interrupted and shut down #{scheduler.isShutdown}"
+      end
+
+      private
+
+      def interrupt
+        scheduler.standby # don't trigger new jobs
+        scheduler.getCurrentlyExecutingJobs.each do |job_context|
+          scheduler.interrupt(job_context.job_detail.key) # interrupt job
+        end
+      end
 
       def job_code_blocks
         JobBlocksContainer.instance
       end
 
-      def schedule(name, options, block)
-        job_code_blocks.jobs[name.to_s] = block
-
-        job_class = (options[:disallow_concurrent] ? Quartz::CronJobSingle : Quartz::CronJob)
-        job = JobBuilder.new_job(job_class.java_class).with_identity("#{name}", self.class.to_s).build
-
-        if options[:cron]
-          trigger_schedule = CronScheduleBuilder.cron_schedule(options[:cron])
-        else
-          trigger_schedule = SimpleScheduleBuilder.simple_schedule.
-                          with_interval_in_seconds(options[:every].to_i).repeat_forever
-        end
-
-        trigger = TriggerBuilder.new_trigger.with_identity("#{name}_trigger", self.class.to_s).
-                          with_schedule(trigger_schedule).build
-
-        puts scheduler.getSchedulerName
-        scheduler.schedule_job(job, trigger)
-      end
-
-      def run_once(name, block)
-        begin
-          job_code_blocks.jobs[name.to_s] = block
-          job_class = Quartz::CronJobSingle
-          job = JobBuilder.new_job(job_class.java_class).with_identity("#{name}", self.class.to_s).build
-
-          scheduler.addJob job, true
-
-          response = scheduler.trigger_job(job.key)
-        rescue SchedulerException => e
-          $stderr.print "exception: #{e} "
-        end
-      end
-
-      def interrupt
-        scheduler.standby                                      # don't trigger new jobs
-        scheduler.getCurrentlyExecutingJobs.each do |job_context|
-          scheduler.interrupt(job_context.job_detail.key)      # interrupt job
-        end
-      end
-
-      def stop
-        interrupt
-        scheduler.shutdown(true)
-      end
-
-
     end
+
   end
 end
