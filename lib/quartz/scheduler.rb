@@ -61,7 +61,7 @@ module Quartz
       end
 
       def schedule(name, options, &block)
-
+        self.run
 
         job_class = (options[:disallow_concurrent] ? Quartz::CronJobSingle : Quartz::CronJob)
 
