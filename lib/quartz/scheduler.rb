@@ -1,5 +1,5 @@
 require 'log4jruby'
-require 'quartz/jars/log4j-1.2.16'                                                                                                    
+require 'quartz/jars/log4j-1.2.16'
 
 module Quartz
   module Scheduler
@@ -17,16 +17,20 @@ module Quartz
         System.setProperty("org.quartz.threadPool.threadsInheritContextClassLoaderOfInitializingThread", "yes")
         System.setProperty("org.quartz.scheduler.instanceName", "RMXScheduler")
 
-        console = ConsoleAppender.new
-        console.setLayout(PatternLayout.new("%d [%p] %m%n"))
-        console.setThreshold(Level.toLevel("INFO"))
-        console.activateOptions
-        org.apache.log4j.Logger.getRootLogger.addAppender(console)
-
+        if root_logger.get_all_appenders.count == 0
+          console = ConsoleAppender.new
+          console.setLayout(PatternLayout.new("%d [%p] %m%n"))
+          console.setThreshold(Level.toLevel("INFO"))
+          console.activateOptions
+          root_logger.add_appender(console)
+        end
       end
     end
 
     module ClassMethods
+      def root_logger
+        org.apache.log4j.Logger.getRootLogger
+      end
 
       def stop
         instance.stop
