@@ -1,17 +1,15 @@
-# Expose the internal Quartz Schedule
+# Internal Quartz Schedule
 module Quartz
   class Schedule
     include Scheduler
 
-    def find_running_job(job_name)
-      running_jobs.map(&:get_job_detail).select { |detail| detail.get_name == job_name }
+    class << self
+      def find_running_job(job_name)
+        instance.status.map(&:job_detail).select { |detail| detail.group == job_name }
+      end
     end
 
-    alias_method :running_jobs, :status
-
-    # this class cannot be scheduled
     def schedule; end
-    # this class cannot stop the scheduler
     def stop; end
   end
 end
