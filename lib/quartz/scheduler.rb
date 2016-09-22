@@ -78,20 +78,18 @@ module Quartz
               with_interval_in_seconds(options[:every].to_i).repeat_forever
         end
 
+        group_name = options[:group_name] || "default"
+        job = JobBuilder.new_job(job_class.java_class).with_identity("#{ name }", group_name.to_s).build
+        trigger = TriggerBuilder.new_trigger.with_identity("#{ name }_trigger", group_name.to_s)
 
         if options[:now]
-          job = JobBuilder.new_job(job_class.java_class).build
-          trigger = TriggerBuilder.new_trigger
           trigger.start_now
         else
-          job = JobBuilder.new_job(job_class.java_class).with_identity("#{name}", self.class.to_s).build
-          trigger = TriggerBuilder.new_trigger.with_identity("#{name}_trigger", self.class.to_s)
           trigger.with_schedule(trigger_schedule)
         end
 
         job_code_blocks.jobs[job.get_key.get_name] = block
         scheduler.schedule_job(job, trigger.build)
-
 
       rescue Java::OrgQuartz::ObjectAlreadyExistsException => e
         raise e
