@@ -5,7 +5,11 @@ module Quartz
 
     class << self
       def find_running_job(job_name)
-        instance.status.map(&:job_detail).select { |detail| detail.group == job_name }
+        running.select { |detail| detail.group == job_name }
+      end
+
+      def running
+        instance.status.map(&:job_detail)
       end
     end
 
