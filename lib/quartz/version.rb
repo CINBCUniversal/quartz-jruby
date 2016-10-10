@@ -1,3 +1,3 @@
 module Quartz
-  VERSION="0.2.1"
+  VERSION = "0.2.3nbc"
 end
