@@ -1,8 +1,10 @@
 # -*- encoding: utf-8 -*-
+$LOAD_PATH.push File.expand_path("../lib", __FILE__)
+require 'quartz/version'
 
 Gem::Specification.new do |s|
   s.name = %q{quartz-jruby}
-  s.version = "0.2.2nbc"
+  s.version = Quartz::VERSION
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Vagmi Mudumbai", 'Michal Ochman']
