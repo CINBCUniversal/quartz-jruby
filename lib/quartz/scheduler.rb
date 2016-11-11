@@ -12,7 +12,6 @@ module Quartz
         include Singleton
 
         System.setProperty("org.quartz.threadPool.class", "org.quartz.simpl.SimpleThreadPool")
-        System.setProperty("org.quartz.threadPool.threadCount", "50")
         System.setProperty("org.quartz.threadPool.threadPriority", "1")
         System.setProperty("org.quartz.threadPool.threadsInheritContextClassLoaderOfInitializingThread", "yes")
         System.setProperty("org.quartz.scheduler.instanceName", "RMXScheduler")
